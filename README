@@ -42,16 +42,33 @@ imageHeight 32                                        ## Integer height used for
 
 General
 Classifier CSVM                                       ## CSVM / LINNET / SVM  (csvm, linear network, svm respectively)
-Codebook CODEBOOK                                     ## CODEBOOK / DEEPCODEBOOK
+Codebook CODEBOOK                                     ## CODEBOOK (/ DEEPCODEBOOK?)
 nClasses 10                                           ## Nr of classes in dataset
 debugOut FALSE                                        ## use debug output (TRUE/FALSE)
 normalOut TRUE                                        ## use normal output (TRUE/FALSE)
+liveROut FALSE					      ## allow program to show live graphs of classification performance over number of iterations
 
 Codebook
+generate TRUE                                        ##whether to generate a codebook, or load the most recent on saved
+standardize TRUE                                    
+whitening FALSE
+rootNPartitions 3                                     ## parameter to determine image segmentation. 2 results in 4 quadrants, 3 in 9 segments, etc. 
 method KMEANS                                         ## The only supported clustering method at the moment
 nClusters 200                                         ## Nr of centroids used in codebook generation
+nIterations 150                                       ## Nr of KMEANS iterations
 SimilarityFunction SOFT_ASSIGNMENT                    ## Activation function of a feature and a centroid. Supported options are: SOFT_ASSIGNMENT, RBF
 similaritySigma 0.0001                                ## Sigma value for the activation function. There should always be a value here, but it is only used when RBF is used.
+
+ImageScanner
+patchSize 38                                          ##patchsize (in pixels)
+scanStride 1                                          ##stride of moving window (in pixels)
+nRandomPatches 200000                                 ## Nr of patches extracted for creating the bag of words
+
+FeatureExtractor
+method [HOG,HOG]                                    ## list of codebooks to use with corresponding local feature descriptor
+
+CLEAN
+standardize [NONE, NONE]                              ##for clean descriptor, whether to perform standardisation. If unused, shouldn't be a problem
 
 FeatureExtractor
 method HOG                                            ## Options: HOG (histogram of oriented gradients), LBP (local binary patterns) (deprecated), CLEAN (raw pixels, with standardisation over colour channels). PIXHOG (combination of CLEAN and HOG, adjusting for vector length, and additional ratio parameter for weighting importance of either)
@@ -61,11 +78,25 @@ padding Identity                                      ## Padding options. Curren
 useColourPixel true                                   ## Toggle whether HOG should append RGBHOGs or just one grey HOG. MNIST Should use 'false', CIFAR could use 'true'
 weightRatio 0.5                                       ## Only relevant for PIXHOG, to weight either CLEAN or HOG more.
 
-ImageScanner                                          ## Settings for extracting patches from an image
-patchHeight 12                                        ## Patch Height 
-patchWidth 12                                         ## Patch Width
-scanStride 2                                          ## Patch Stride
-nRandomPatches 100000                                 ## Nr of random patches used for codebook generation.
+HOG
+nBins [9,18]                                         ## Nr of bins used to represent 0-180 degree range in HOG
+cellSize [18,]                                         ## Size of a single square HOG-cell within a patch (in pixels). HOGs are computed for each cell, and concatenated to represent the patch
+cellStride [6]                                       ## Stride of HOG cells, conventionally same as cellSize
+padding [None]                                       ## how to pad pixels around the image NONE/ZERO/IDENTITY (NOTE! if set to None, be aware that patch size will be adapted p-2 to cope.)
+useColourPixel [false]                                ##whether or not to use colour channel (currently implemented to work with CIFAR-10. unsure about other image formats.)
+interpolation [INTERPOLATE_LINEAR]                   ##toggle what type of neighbor binning should be applied
+binmethod [CROSSCOLOUR]                              ## [CROSSCOLOUR/BYCOLOUR] whether, when using colours, intensities should be binned into a single histogram, or seperate ones by colour
+postprocessing [PURE]                                 ## PURE/NORMALISATION if to perform any postprocessing
+debugLevel [0]                                        ## raise to 1, 2, or 3 for more advanced displaying of HOG values and computations on more detailed scale
+
+##lbp should be neglected for time being
+LBP
+cellSize [6]
+cellStride [6]
+padding [None]
+useColourPixel [true]
+useUniformity [true]
+binmethod [BYCOLOUR]
 
 SVM
 Kernel LINEAR                                         ## Type of SVM Kernel. Supported options: LINEAR, RBF
@@ -83,6 +114,7 @@ initWeight 0.01                                       ## Initial Weight
 learningRate 0.000005                                 ## Lsearning Rate
 
 ConvSVM                                               ## Marco's CSVM
+loadLastUsed FALSE 				      ## whether to use a previously trained primal svm
 learningRate 0.000001                                 ## LearningRate
 nIterations 200                                       ## N trainings iterations
 initWeight 0.0000002                                  ## Initial Weight value
